@@ -345,8 +345,6 @@ def OtenkiMessageMaker(code, itu, si):
      am2COR=jsonData["forecasts"][itu]["chanceOfRain"]["T06_12"]
      pm1COR=jsonData["forecasts"][itu]["chanceOfRain"]["T12_18"]
      pm2COR=jsonData["forecasts"][itu]["chanceOfRain"]["T18_24"] 
-     #if itu == 0 and tempMIN == None:
-     #    tempMIN = todayTempMIN(si)
      if tempMIN is None and tempMAX is not None:
          if "雨" in weather: tempMIN=int(tempMAX)-5
          else: tempMIN=int(tempMAX)-9
