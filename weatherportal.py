@@ -41,11 +41,12 @@ app = Flask(__name__)
 YOUR_CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]
 YOUR_CHANNEL_SECRET = os.environ["CHANNEL_SECRET"]
 
-#環境変数を実用的な変数に代入しているかも
+#環境変数を利用しやすい文字の変数に代入
 line_bot_api = LineBotApi(YOUR_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(YOUR_CHANNEL_SECRET)
 
 #対話内容を管理するクラスとインスタンスの初期設定
+#情報保持にも利用
 class Status:
     def __init__(self):
           self.context = "0"
@@ -92,7 +93,6 @@ class Status:
     def set_basyoList(self, basyoList):
           self.basyoList = basyoList
 
-
     def get_date2(self):
         return self.date2
     def set_date2(self, date2):
@@ -113,7 +113,6 @@ class Status:
     def set_basyoList2(self, basyoList2):
           self.basyoList2 = basyoList2
 
-
     def get_Hdate(self):
         return self.Hdate
     def set_Hdate(self, Hdate):
@@ -133,7 +132,6 @@ class Status:
         return self.HbasyoList
     def set_HbasyoList(self, HbasyoList):
           self.HbasyoList = HbasyoList
-
 
     def get_para(self):
         return self.para
@@ -211,7 +209,6 @@ class MySession:
         new_status.set_basyoList(basyoList)
         MySession._status_map[user_id] = new_status
 
-
     def read_date2(user_id):
         return MySession._status_map.get(user_id).get_date2()
     def update_date2(user_id, date2):
@@ -240,7 +237,6 @@ class MySession:
         new_status.set_basyoList2(basyoList2)
         MySession._status_map[user_id] = new_status
 
-
     def read_Hdate(user_id):
         return MySession._status_map.get(user_id).get_Hdate()
     def update_Hdate(user_id, Hdate):
@@ -268,7 +264,6 @@ class MySession:
         new_status = MySession._status_map.get(user_id)
         new_status.set_HbasyoList(HbasyoList)
         MySession._status_map[user_id] = new_status
-
 
     def read_para(user_id):
         return MySession._status_map.get(user_id).get_para()
@@ -306,8 +301,8 @@ class MySession:
         MySession._status_map[user_id] = new_status
 
 
-
 #都道府県コードを返す
+#01～47の値を返すために利用
 def todoufukenNum(num):
      if num < 9:
           codeNum = num + 1
@@ -318,7 +313,9 @@ def todoufukenNum(num):
           codeNum = num + 1
           return str(codeNum)
 
+
 #都道府県の場所コード探す
+#場所コードは、都道府県コード(01～47)+4ケタの数の計6ケタで構成されている
 def codeKaraFind(finder):
      teijiBasyoList = []
      for i in range(0, len(Tcode)):
@@ -327,6 +324,7 @@ def codeKaraFind(finder):
 
      return teijiBasyoList
       
+
 #天気メッセージを作る
 def OtenkiMessageMaker(code, itu, si):
      url="https://weather.tsukumijima.net/api/forecast/city/" + code
@@ -356,18 +354,14 @@ def OtenkiMessageMaker(code, itu, si):
      tenkiInfo = '＜日付＞:{0}\n＜天気＞:{1}\n＜気温＞\n最低気温:{2}℃\n最高気温:{3}℃\n＜降水確率＞\n深夜:{4}　朝:{5}\n　昼:{6}　夜:{7}'.format(date,weather,tempMIN,tempMAX,am1COR,am2COR,pm1COR,pm2COR)
      return tenkiInfo
 
+
 def todayTempMIN(si):
      url = "https://www.data.jma.go.jp/obd/stats/data/mdrr/tem_rct/alltable/mntemsadext00.csv"
      response = requests.get(url)
-     #with open (response, "r") as f:
-     #df = pd.read_csv(response)#mntemsadext00_rct.csv
-     #df = pd.read_csv(url, encoding="shiftJIS")#表形式ならこっちがおススメ
-     #df = pd.read_csv(response, encoding="shiftJIS")
-     #with urllib.request.urlopen(url) as response:
-     #    df = next(response).decode("shiftjis")
      basyo = df[df["地点"].str.contains(si)]
      TempMIN = basyo.iat[0, 9]
      return TempMIN
+
 
 #知りたい場所の天気を作る
 def needWeatherMaker(code, itu):
@@ -378,6 +372,7 @@ def needWeatherMaker(code, itu):
      weather="--"
      weather=jsonData["forecasts"][itu]["telop"]
      return weather
+
 
 #気温の平均を作る
 def tempMEANMaker(code, itu):
@@ -401,6 +396,7 @@ def tempMEANMaker(code, itu):
      tempMEAN=(int(tempMAX)+int(tempMIN))/2.0-1.0
      return tempMEAN
 
+
 #気温情報に欠けがないか調べる
 def kionnHantei(code, itu):
      url="https://weather.tsukumijima.net/api/forecast/city/" + code
@@ -413,6 +409,7 @@ def kionnHantei(code, itu):
      tempMIN=jsonData["forecasts"][itu]["temperature"]["min"]["celsius"]
      if ((tempMAX is None) or (tempMIN is None)): return "だめです"
      else: return "いいです"
+
 
 #1か所の傘の有無判定
 def kasaHantei(code, itu):
@@ -444,6 +441,7 @@ def kasaHantei(code, itu):
         kasaInfo = "＜傘情報＞\n傘は必要なさそうです！"
      return kasaInfo
 
+
 #1か所の服装判定
 def fukusouHantei(tempMEAN, weather):
   if tempMEAN <= 5:
@@ -469,6 +467,7 @@ def fukusouHantei(tempMEAN, weather):
   else:
     fukusou = '＜服装情報＞\n気温の情報を取得できませんでした…'
   return fukusou
+
 
 #2か所の服装判定
 def fukusouHantei2(STM, MTM, para):
@@ -497,6 +496,7 @@ def fukusouHantei2(STM, MTM, para):
   else:
     fukusou = '＜服装情報＞\n気温の情報を取得できませんでした…'
   return (fukusou + kandansa)
+
 
 #2か所の傘の有無判定
 def kasaHantei2(codeS, ituS, codeM, ituM, ST, MT):
@@ -552,6 +552,7 @@ def kasaHantei2(codeS, ituS, codeM, ituM, ST, MT):
         kasaInfo = "＜傘情報＞\n傘は必要ありません。"
      return kasaInfo
 
+
 #天気アイコン判定
 def picUrlMaker(weather):
     if weather=="晴れ" or weather=="晴山沿い雷雨" or weather=="晴山沿い雪" or weather=="朝の内霧後晴" or weather=="晴明け方霧":
@@ -562,7 +563,7 @@ def picUrlMaker(weather):
         picUrl="https://i.ibb.co/w6yBmKP/Sun-To-Rain.png"
     elif weather=="晴のち雪" or weather=="晴のち一時雪" or weather=="晴のち時々雪" or weather=="晴のち雪か雨":
         picUrl="https://i.ibb.co/2hWsVQy/Sun-To-Snow.png"
-    #存在しないパターン
+    #以下の2行は存在しないパターンだが、後々のエラー原因となるため記述している
     elif weather=="晴時々曇" or weather=="晴一時曇":
         picUrl="https://i.ibb.co/vJn5mwZ/Sun-Or-Cloud.png"
     elif weather=="晴時々雨" or weather=="晴一時雨" or weather=="晴時々雨か雪" or weather=="晴一時雨か雪" or weather=="晴一時雨か雷雨" or weather=="晴朝夕一時雨" or weather=="晴時々雨で雷雨を伴う":
@@ -585,7 +586,7 @@ def picUrlMaker(weather):
         picUrl="https://i.ibb.co/9nyfKy5/Cloud-Or-Snow.png"
     elif weather=="雨" or weather=="大雨" or weather=="風雨共に強い" or weather=="雨一時強く降る" or weather=="雨で雷を伴う":
         picUrl="https://i.ibb.co/5xkdS8V/Rain.png"
-    #存在しないパターン
+    #以下の2行は存在しないパターンだが、後々のエラー原因となるため記述している
     elif weather=="雨のち曇" or weather=="雨のち一時曇" or weather=="雨のち時々曇" or weather=="雨か雪のち曇" or weather=="朝の内雨のち曇":
         picUrl="https://i.ibb.co/vPgg2nt/Rain-To-Cloud.png"
     elif weather=="雨のち晴" or weather=="晴朝の内一時雨" or weather=="雨か雪のち晴" or weather=="朝の内雨のち晴" or weather=="雨昼頃から晴" or weather=="雨夕方から晴" or weather=="雨夜は晴":
@@ -619,6 +620,8 @@ def picUrlMaker(weather):
     else: picUrl="未知の天気"
     return picUrl
 
+
+#雨雲レーダーに使用するURLの作成
 def tenkijpUrlMaker(ken):
     urlF = "https://tenki.jp/radar/"
     urlR = "/rainmesh.html"
@@ -679,6 +682,7 @@ def tenkijpUrlMaker(ken):
     elif ken == "鹿児島県": return urlF+"9/49"+urlR
     elif ken == "沖縄県": return urlF+"10/50"+urlR
 
+
 def gozenHantei():
      url="https://weather.tsukumijima.net/api/forecast/city/300010"
      response=requests.get(url)
@@ -690,6 +694,7 @@ def gozenHantei():
          return True
      else: return False
 
+
 #####################通信の検証####################
 # @app.route("/callback"...はappに対して/callbackというURLに対応するアクションを記述
 @app.route("/callback", methods=['POST'])
@@ -697,7 +702,7 @@ def callback():
     # get X-Line-Signature header value 署名検証
     signature = request.headers['X-Line-Signature']
 
-    # get request body as text リクエストボディ取得(これも検証の一環かしら)
+    # get request body as text リクエストボディ取得(これも検証の一環)
     body = request.get_data(as_text=True)
     app.logger.info("Request body: " + body)
 
@@ -712,9 +717,13 @@ def callback():
     return 'OK'
 ###############################################
 
-##############################################
-##########実行するプログラムの内容をここに書く################
-#@handler.addのメソッドの引数にはイベントのモデルを入れる(MessageEvent=メッセージを受けたら)
+
+
+
+#############################################
+##########動作を決定するプログラムはここから################
+#@handler.addのメソッドの引数にはイベントのモデルを入れる
+#(MessageEvent=メッセージを受けたら)
 @handler.add(MessageEvent,message=TextMessage)
 #関数名handle_messageは自由
 #statusで1か所or2か所を管理。1x...1か所。2x...2か所
@@ -759,8 +768,7 @@ def handle_message(event):
         buttons_template = ButtonsTemplate(text="知りたいことに最も近いものをお選びください！", title="ヘルプ", actions=[
                                                 MessageAction(label="システムの利用方法について", text="システムの利用方法について"),
                                                 MessageAction(label="会話のやり直し方について", text="会話のやり直し方について"),
-                                                MessageAction(label="保持情報の消し方について", text="保持情報の消し方について"),
-                                                MessageAction(label="アンケートについて", text="アンケートについて")
+                                                MessageAction(label="保持情報の消し方について", text="保持情報の消し方について")
         ])
         template_message = TemplateSendMessage(
             alt_text="ヘルプを受け付けました！お探しの内容はありますでしょうか？" , template=buttons_template)
@@ -780,11 +788,6 @@ def handle_message(event):
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text = "「全リセット」と入力していただくと保持情報も含めすべてのデータを初期状態に戻します。場合に応じて「リセット」と「全リセット」を使い分けて下さい！"))
-    if talk == "アンケートについて":
-        line_bot_api.reply_message(
-            event.reply_token,
-            [TextSendMessage(text = "アンケートは任意回答をお願いしています！アンケートは全30項目ほどで、必須回答は10件程度です。お時間は10分～20分ほどいただくかと思います。\nアンケートに答えていただいた方には何やら特典が付いてくるそうなので、ふるってご参加いただければと思います！"),
-            TextSendMessage(text = "↓アンケート回答はこちら↓\nhttps://forms.office.com/r/qep9rrbQKD")])
 
 #すやすやフォグくん
     if (MySession.read_oyasumi(user_id) == 3 or MySession.read_oyasumi(user_id) == 2 or MySession.read_oyasumi(user_id) == 1):
@@ -1603,21 +1606,12 @@ def handle_message(event):
             TextSendMessage(text=tellHotOrColdError))
 
 
-
-
-
-
-
-
-
-
 #1か所の場所を聞く####################
     elif MySession.read_context(user_id) == "0" and ("県" in talk or "都" in talk or "道" in talk or "府" in talk):
       basyo = []
       ken = ""
       si = ""
 
-      #if文の侵入が1つだけしか行けないならこれが原因で動かないかも
       if "県" in talk and ("から" not in talk or "～" not in talk):
         basyo = talk.split("県", 1)
         ken = basyo[0] + "県"
@@ -2022,25 +2016,6 @@ def handle_message(event):
 ###############################
 
 
-
-
-###############################
-
-#基礎info#########################
-    elif MySession.read_context(user_id) == "0" and ("バージョン" in talk or "ver" in talk or "ばーじょん" in talk):
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text = "現在のバージョンはver1.1、WeatherNewsBotからバージョンアップを経て名前が変わっています。"))
-#フォグ君が追加されたらアンケートに一個メッセージを追加する
-#これは使用しない処理
-    elif MySession.read_context(user_id) == "100" and ("アンケート" in talk or "questionnaire" in talk or "あんけーと" in talk) and talk != "アンケート回答した":
-        line_bot_api.reply_message(
-            event.reply_token,
-           [TextSendMessage(text = "↓アンケートはこちらから\nhttps://forms.office.com/r/qep9rrbQKD"),
-           TextSendMessage(text = "アンケートでは、あなたが現在使用している天気予報のアプリやシステムなどと比べ、WeatherNewsBotがどれくらい便利か、システムの完成度や利便性はどの程度か、追加してほしい機能や不満点、バグの有無などについてお伺いしています。"),
-           TextSendMessage(text = "ver1.1では、ver1.0を利用した方と利用されていない方で別にアンケート項目を設けております(ver1.0からご利用いただいている方は、1.0の時に比べどの程度改善したかなどを伺っています)。さらに、WeatherNewsBotのマスコットキャラクター「フォグ」との会話を意識したアップデートを通して使用意欲の向上があったか、知名度や利用者の増加は見込めるかなどについてもお伺いしています")])
-###############################
-
 #その他の会話#######################
     #'''
     elif MySession.read_context(user_id) == "0" and ("狐" in talk or "キツネ" in talk or "きつね" in talk):
@@ -2232,10 +2207,6 @@ def handle_message(event):
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text = "あっ！お世話になっております、ヘロクログさん！今日も--尻尾が素敵ですね！（？）"))
-    elif MySession.read_context(user_id) == "0" and talk == "vore" or talk == "ボア"  or talk == "ぼあ":
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text = "ぼあ？それってなんですか？\nうーん、ぼあ？なんだか背筋がぞわぞわするような…？"))
     elif MySession.read_context(user_id) == "0" and (((("性能" in talk or "精度" in talk) and ("悪い" in talk or "わるい" in talk)) or (("あて" in talk or "参考" in talk) and ("なら" in talk)) or talk == "使えない" or talk == "使えないね") or (talk == "嘘つき" or talk == "うそつき")):
         line_bot_api.reply_message(
             event.reply_token,
@@ -2248,10 +2219,6 @@ def handle_message(event):
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text = "このシステムを作るにあたり、ボクのキャラクターデザインのご意見などをイラストレーターのほまけさんから頂きました。ボクの面倒を見てくれてありがとうございました！ここからじゃボクの声は届かないだろうけど、この気持ちが届くといいな。"))
-    elif MySession.read_context(user_id) == "0" and (talk == "バグ" or talk == "不具合" or talk == "バグある" or talk == "不具合ある" or talk == "バグってる" or talk == "不具合あったよ" or talk == "バグあったよ" or talk == "不具合見つけた" or talk == "不具合見つけたよ" or talk == "バグ見つけた" or talk == "バグ見つけたよ"):
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text = "バグがあったんですね！？不具合があり申し訳ございません！\n実施しているアンケートの中に[追加してほしい機能や不具合がありましたら、こちらにご記入ください]という欄がありますので、お手数をおかけしますがそちらに入力していただけますと幸いです！\nアンケートはこちらから↓\nhttps://forms.office.com/r/qep9rrbQKD"))
     elif MySession.read_context(user_id) == "0" and (talk == "－－－－　・－・－・　－・－・　・・－・　－・・・" or talk == "－・－・・　－－－－　－・－－－　－・・－　－－－・－　・－・・"):
         line_bot_api.reply_message(
             event.reply_token,
@@ -2261,16 +2228,6 @@ def handle_message(event):
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text = "きっとお父さんとお母さんは空から見てくれてますよ。そう、きっと。\nたから"))
-    elif MySession.read_context(user_id) == "0" and talk == "アンケート回答した":
-        line_bot_api.reply_message(
-            event.reply_token,
-            [TextSendMessage(text = ankeThanks1 + user_name + ankeThanks2),
-            TextSendMessage(text = ankeThanks3),
-            ImageSendMessage(original_content_url=ankeThanksPic, preview_image_url=ankeThanksPic)])
-    elif MySession.read_context(user_id) == "0" and ("不満" in talk or  "ダメ" in talk):
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text = "至らない点があり申し訳ございません。\n実施しているアンケートの中で悪かった点や改善点などをお聞きしておりますので、お手数をおかけしますがそちらに入力していただけますと幸いです！\nアンケートはこちらから↓\nhttps://forms.office.com/r/qep9rrbQKD"))
 
     #'''
 ###############################
@@ -2313,7 +2270,7 @@ def handle_message(event):
           #TextSendMessageオブジェクトを渡しています。
 
 ##################################
-##############################################
+###########動作を決めるプログラムの内容部分ここまで#############
 ##############################################
 
 ##################その他のinfo#####################
@@ -2327,7 +2284,6 @@ todoufuken=["北海道","青森県","岩手県","宮城県","秋田県","山形�
 
 day=["今日","明日","明後日"]
 
-#DB使えないんだよね。。。
 Tcode=['011000','012010','012020','013010','013020','013030','014010','014020','014030','015010',
 '015020','016010','016020','016030','017010','017020','020010','020020','020030','030010',
 '030020','030030','040010','040020','050010','050020','060010','060020','060030','060040',
@@ -2412,9 +2368,8 @@ getKonpeitou = "えっいいんですか！？ではお言葉に甘えて、い�
 getTunamayo = "いただいていいんですか？では遠慮なくいただ…あっ。\nそうだった、ここからじゃ受け取れませんよね…\n実はボク、ツナマヨ好きなんですよね。このお仕事でずっとここにいるのでおにぎりを持ってきてるんですが、全部ツナマヨ味なんです。\nここからじゃ受け取れないのでお気持ちだけいただきますね。ありがとうございます！"
 mouiranai = "あっ……\nぐすっ、お役に立てず申し訳ございません。お力添えできなかったボクなんて管理者失格ですよね…ごめんなさい……。"
 imamadearigatou = "このbotの削除ですね、分かりました。\nPCからご利用いただいている方とスマホからご利用いただいている方向けに消し方をご紹介しますね。今までありがとうございました！"
-howToUninstallPC = "＜PCをご利用の方＞\n1)トーク内右上の︙を左クリック\n2)ブロックを左クリック\n3)トーク一覧のWeatherNewsBotを右クリック\n4)トーク削除を左クリック\n5)左下の…から設定を左クリック\n6)友だち管理からWeatherNewsBotを選び、削除を左クリック"
-howToUninstallSP = "＜スマホをご利用の方＞\n1)トーク一覧のWeatherNewsBotを左にスワイプ(Androidをご利用の方は長押し)して削除\n2)友達リスト→公式アカウントから、WeatherNewsBotを選択し、削除"
-gomennnasai = "申し訳ございませんっ！精度、良くないですよね…。ボクがまだこのbotを使いこなせていないがためにご不便ご迷惑をおかけしてしまい、誠に申し訳ございません。\nもしよければアンケートを実施しておりますので、不便な点などをご報告いただければ幸いです。\n＜リンク＞\nhttps://forms.office.com/r/890X6LLyRU"
+howToUninstallPC = "＜PCをご利用の方＞\n1)トーク内右上の︙を左クリック\n2)ブロックを左クリック\n3)トーク一覧のウェザーポータルを右クリック\n4)トーク削除を左クリック\n5)左下の…から設定を左クリック\n6)友だち管理からウェザーポータルを選び、削除を左クリック"
+howToUninstallSP = "＜スマホをご利用の方＞\n1)トーク一覧のウェザーポータルを左にスワイプ(Androidをご利用の方は長押し)して削除\n2)友達リスト→公式アカウントから、ウェザーポータルを選択し、削除"
 zatudan = ["システムの仕様上、BOTからの返信が遅くなったり、返信が来なかったりすることがあります。それが顕著にみられるのが、「使い始め」と「暑がり寒がりを聞いた後」です。前者はBOTサーバーを起動するため、後者は情報取得と処理に時間がかかるから、反応が遅くなっちゃうんです。",
 "「こんぺいとう」っておいしいですよね。あのポリポリっとした触感に、口に入れた瞬間に広がる優しい甘さ…。あれがたまらなく好きです。",
 "この会話の存在を知っている人は基本的にわざと入力ミスし続けた人だけだと思うのですが、ヒントなしにココにだとりつける人っているんでしょうかね？",
@@ -2426,9 +2381,6 @@ zatudan = ["システムの仕様上、BOTからの返信が遅くなったり�
 "このぼっとは、墨田区のごみ捨て案内botというものを少し参考にメッセージを作成したりしています。なにせリアクションの芸が細かくて面白いんですよ。",
 "実は開発初期段階時点では、入力した情報を保持して次回以降の入力を簡単に済ませられるシステムが組まれていたそうです。\nどうして無くなったか、ですか？…残念ながら、仕様が…",
 "回文ってご存じですか？たとえば しんぶんし などがそれにあたります。ボクの好きな回文に リモコンてんこ盛り っていうのがあるんですよね。クスっと笑えるシチュエーションなのが好きなポイントです。"]
-ankeThanks1 = "アンケートにご協力くださりありがとうございました！長い長いアンケートだったと思いますが、ご回答くださり嬉しい限りです！実はボクの方からも"
-ankeThanks2 = "さんの回答結果を見ることができるのですが、とても丁寧にご回答くださっているようで感謝の言葉もありません！"
-ankeThanks3 = "ここだけの話、反応するワードは天気関連のものだけじゃないんですよね。もしご興味があれば試してみてくださいね。\nここまでお付き合いくださり、またアンケートにもご回答くださりありがとうございました！！\nではでは～！"
 
 FogDesuPic = "https://i.ibb.co/FqRTHDg/FogDesu.png"
 ankeThanksPic = "https://i.ibb.co/nwc4m8b/anke-Thanks.png"
@@ -2446,5 +2398,3 @@ if __name__ == "__main__":
 #    app.run()
     port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
-
